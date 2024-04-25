@@ -6,6 +6,9 @@ void Stopwatch::press() {
         first_time = false;
     } else {
         std::chrono::time_point<std::chrono::system_clock> current_time = std::chrono::system_clock::now();
+        // note that we have to assign it the type on the left because otherwise
+        // the difference would have type std::chrono::system_clock::duration
+        // which is measured in nanoseconds
         std::chrono::duration<double> delta = current_time - previous_time;
         times[curr_idx] = delta.count();
         curr_idx = (curr_idx + 1) % num_times_to_average_over; // circular clobbering array.

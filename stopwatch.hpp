@@ -5,6 +5,8 @@
 /**
  * \brief A stopwatch which measures how frequently it's been pressed in seconds
  * to be used to measure at what frequency a specific line of code is run at.
+ *
+ * \note everything is measured in seconds
  */
 class Stopwatch {
   public:
