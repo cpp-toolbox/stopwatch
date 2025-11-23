@@ -1,26 +1,35 @@
 #include "stopwatch.hpp"
 
 void Stopwatch::press() {
+    auto current_time = std::chrono::system_clock::now();
     if (first_time) {
-        previous_time = std::chrono::system_clock::now();
-        first_time = false;
-    } else {
-        std::chrono::time_point<std::chrono::system_clock> current_time = std::chrono::system_clock::now();
-        // note that we have to assign it the type on the left because otherwise
-        // the difference would have type std::chrono::system_clock::duration
-        // which is measured in nanoseconds
-        std::chrono::duration<double> delta = current_time - previous_time;
-        times[curr_idx] = delta.count();
-        curr_idx = (curr_idx + 1) % num_times_to_average_over; // circular clobbering array.
         previous_time = current_time;
+        first_time = false;
+        return;
     }
-    average_frequency = 1.0 / this->compute_average_period();
+
+    std::chrono::duration<double> delta = current_time - previous_time;
+    double delta_sec = delta.count();
+
+    // Add to circular buffers
+    micro_times.push_back(delta_sec);
+    macro_times.push_back(delta_sec);
+
+    previous_time = current_time;
 }
 
-double Stopwatch::compute_average_period() {
-    double delta_sum = 0.0;
-    for (int i = 0; i < num_times_to_average_over; i++) {
-        delta_sum += times[i];
-    }
-    return delta_sum / (double)num_times_to_average_over;
+StopwatchStats Stopwatch::get_micro_stats() const {
+    double mean = math_utils::compute_mean(micro_times.to_vector());
+    double var = math_utils::compute_variance(micro_times.to_vector());
+    double stddev = std::sqrt(var);
+    double freq = mean > 0.0 ? 1.0 / mean : 0.0;
+    return StopwatchStats{mean, var, stddev, freq};
+}
+
+StopwatchStats Stopwatch::get_macro_stats() const {
+    double mean = math_utils::compute_mean(macro_times.to_vector());
+    double var = math_utils::compute_variance(macro_times.to_vector());
+    double stddev = std::sqrt(var);
+    double freq = mean > 0.0 ? 1.0 / mean : 0.0;
+    return StopwatchStats{mean, var, stddev, freq};
 }
